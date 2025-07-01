@@ -7,10 +7,14 @@ const ejsMate = require('ejs-mate');
 const ExpressError = require('./utils/ExpressError');
 const session = require('express-session');
 const flash = require('connect-flash');
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
+const User = require('./models/user');
 
 // routers
-const campgrounds = require('./routes/campgrounds');
-const reviews = require('./routes/reviews');
+const userRoutes = require('./routes/users');
+const campgroundRoutes = require('./routes/campgrounds');
+const reviewRoutes = require('./routes/reviews');
 
 // Database Connection
 mongoose.connect('mongodb://127.0.0.1:27017/YelpCamp')
@@ -31,6 +35,7 @@ app.use(express.urlencoded({ extended: true }));  // To use of req.body
 app.use(methodOverride('_method'));               // To use PUT, DELETE req
 app.use(express.static(path.join(__dirname, 'public')));  // To use statics file (css, js)
 
+// session middleware
 const sessionConfig = {
     secret: 'thisshouldbebettersecret!',
     resave: false,
@@ -40,19 +45,31 @@ const sessionConfig = {
         expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
         maxAge: 1000 * 60 * 60 * 24 * 7
     }
-}
+};
 app.use(session(sessionConfig));
 app.use(flash()); 
 
+// passport middlewares
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+// flash card middlewares
 app.use((req, res, next) => {
+    console.log(req.session);
+    res.locals.currentUser = req.user;
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
     next();
 })
-
+ 
 // campground and review routes
-app.use('/campgrounds', campgrounds);
-app.use('/campgrounds/:id/reviews', reviews);
+app.use('/', userRoutes);
+app.use('/campgrounds', campgroundRoutes);
+app.use('/campgrounds/:id/reviews', reviewRoutes);
 
 // dummy file
 app.get('/', (req, res) => {

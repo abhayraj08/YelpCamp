@@ -5,7 +5,7 @@ const Campground = require('../models/campground');
 const catchAsync = require('../utils/catchAsync');
 const ExpressError = require('../utils/ExpressError');
 const { campgroundSchema } = require('../schemas');
-
+const { isLoggedIn } = require('../middleware');
 
 // validating the Campground JoiSchemas
 const validateCampground = (req, res, next) => {
@@ -18,7 +18,6 @@ const validateCampground = (req, res, next) => {
     }
 }
 
-
 // home page
 router.get('/', catchAsync(async (req, res) => {
     const campgrounds = await Campground.find({});
@@ -26,12 +25,12 @@ router.get('/', catchAsync(async (req, res) => {
 }))
 
 // create (go to page)
-router.get('/new', catchAsync(async (req, res) => {
+router.get('/new', isLoggedIn, catchAsync(async (req, res) => {
     res.render('campgrounds/new');
 }))
 
 // create (new data into database)
-router.post('/', validateCampground, catchAsync(async (req, res) => {
+router.post('/', isLoggedIn, validateCampground, catchAsync(async (req, res) => {
     // if(!req.body.campground) throw new ExpressError('Invalid Campground Data', 400);
     const campground = new Campground(req.body.campground);
     await campground.save();
@@ -49,11 +48,11 @@ router.get('/:id', catchAsync(async (req, res) => {
         req.flash('error', 'Cannot find that campground!');
         return res.redirect('/campgrounds');
     }
-    res.render('campgrounds/show', { campground, msg: req.flash('success')});
+    res.render('campgrounds/show', { campground });
 }));
 
 // update (go to page)
-router.get('/:id/edit', catchAsync(async (req, res) => {
+router.get('/:id/edit', isLoggedIn, catchAsync(async (req, res) => {
     const campground = await Campground.findById(req.params.id);
     if(!campground) {
         req.flash('error', 'Cannot find that campground!');
@@ -63,7 +62,7 @@ router.get('/:id/edit', catchAsync(async (req, res) => {
 }))
 
 // update (updated data into database)
-router.put('/:id', validateCampground, catchAsync(async (req, res) => {
+router.put('/:id', isLoggedIn, validateCampground, catchAsync(async (req, res) => {
     const campground = await Campground.findByIdAndUpdate(req.params.id, req.body.campground);
     req.flash('success', 'Successfully updated campground!');
     res.redirect(`/campgrounds/${campground._id}`);
