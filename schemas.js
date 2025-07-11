@@ -1,10 +1,13 @@
+// Joi is a powerful data validation library for JavaScript, commonly used in 
+// Node.js applications to validate request data (like form inputs, API requests, etc.).
+
 const Joi = require('joi');
 
 module.exports.campgroundSchema = Joi.object({
     campground: Joi.object({
         title: Joi.string().required(),
         price: Joi.number().required().min(0),
-        image: Joi.string().required(),
+        // image: Joi.string().required(),
         location: Joi.string().required(),
         description: Joi.string().required()
     }).required()
