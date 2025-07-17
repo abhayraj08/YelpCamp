@@ -1,9 +1,8 @@
-if(process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production") {
     require('dotenv').config();
 }
 
 const express = require('express');
-const port = 3030;
 const path = require('path');
 const mongoose = require('mongoose');
 const methodOverride = require('method-override'); // To use PUT & DELETE req
@@ -15,7 +14,6 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const User = require('./models/user');
 const helmet = require('helmet');
-
 const mongoSanitize = require('express-mongo-sanitize');
 
 // requiring routers
@@ -23,8 +21,11 @@ const userRoutes = require('./routes/users');
 const campgroundRoutes = require('./routes/campgrounds');
 const reviewRoutes = require('./routes/reviews');
 
+const MongoDBStore = require('connect-mongo');
+
 // Database Connection
-mongoose.connect('mongodb://127.0.0.1:27017/YelpCamp')
+const dbUrl = process.env.DB_URL || 'mongodb://127.0.0.1:27017/YelpCamp';
+mongoose.connect(dbUrl)
     .then(() => console.log("Database connected"))
     .catch((e) => console.log(e))
 
@@ -43,12 +44,26 @@ app.use(methodOverride('_method'));               // To use PUT, DELETE req
 app.use(express.static(path.join(__dirname, 'public')));  // To use statics file (css, js)
 app.use(mongoSanitize({
     replaceWith: '_',
-  }));
+}));
+
+const secret = process.env.SECRET || 'thisshouldbebettersecret!'
+
+const store = MongoDBStore.create({
+    mongoUrl: dbUrl,
+    secret,
+    touchAfter: 24 * 60 * 60
+})
+
+store.on('error', function(e) {
+    console.log("SESSION STORE ERROR", e);
+})
+
 
 // session middleware
 const sessionConfig = {
+    store,
     name: 'session',
-    secret: 'thisshouldbebettersecret!',
+    secret,
     resave: false,
     saveUninitialized: true,
     cookie: {
@@ -60,31 +75,31 @@ const sessionConfig = {
 };
 
 app.use(session(sessionConfig));
-app.use(flash()); 
+app.use(flash());
 app.use(helmet());
 
 const scriptSrcUrls = [
-    "https://stackpath.bootstrapcdn.com/",
-    "https://api.tiles.mapbox.com/",
-    "https://api.mapbox.com/",
-    "https://kit.fontawesome.com/",
-    "https://cdnjs.cloudflare.com/",
+    "https://stackpath.bootstrapcdn.com",
+    "https://api.tiles.mapbox.com",
+    "https://api.mapbox.com",
+    "https://kit.fontawesome.com",
+    "https://cdnjs.cloudflare.com",
     "https://cdn.jsdelivr.net",
 ];
 const styleSrcUrls = [
-    "https://kit-free.fontawesome.com/",
-    "https://stackpath.bootstrapcdn.com/",
-    "https://api.mapbox.com/",
-    "https://api.tiles.mapbox.com/",
-    "https://fonts.googleapis.com/",
-    "https://use.fontawesome.com/",
+    "https://kit-free.fontawesome.com",
+    "https://stackpath.bootstrapcdn.com",
+    "https://api.mapbox.com",
+    "https://api.tiles.mapbox.com",
+    "https://fonts.googleapis.com",
+    "https://use.fontawesome.com",
     "https://cdn.jsdelivr.net"
 ];
 const connectSrcUrls = [
     "https://api.mapbox.com/",
-    "https://a.tiles.mapbox.com/",
-    "https://b.tiles.mapbox.com/",
-    "https://events.mapbox.com/",
+    "https://a.tiles.mapbox.com",
+    "https://b.tiles.mapbox.com",
+    "https://events.mapbox.com",
 ];
 const fontSrcUrls = [];
 app.use(
@@ -101,7 +116,7 @@ app.use(
                 "blob:",
                 "data:",
                 "https://res.cloudinary.com/dhrujpm4m/", //SHOULD MATCH YOUR CLOUDINARY ACCOUNT! 
-                "https://images.unsplash.com/",
+                "https://images.unsplash.com",
             ],
             fontSrc: ["'self'", ...fontSrcUrls],
         },
@@ -124,7 +139,7 @@ app.use((req, res, next) => {
     res.locals.error = req.flash('error');
     next();
 })
- 
+
 // campground and review routes
 app.use('/', userRoutes);
 app.use('/campgrounds', campgroundRoutes);
@@ -149,6 +164,7 @@ app.use((err, req, res, next) => {
 })
 
 // Starting server
+const port = process.env.PORT || 3030;
 app.listen(port, () => {
     console.log(`Serving on port ${port}`);
 })     
