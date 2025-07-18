@@ -6,7 +6,8 @@ const { places, descriptors } = require('./seedHelpers');
 const Campground = require('../models/campground');
 const Review = require('../models/review');
 
-mongoose.connect('mongodb://127.0.0.1:27017/YelpCamp')
+const dbUrl = process.env.DB_URL || 'mongodb://127.0.0.1:27017/YelpCamp';
+mongoose.connect(dbUrl)
     .then(() => console.log("Database connected"))
     .catch((e) => console.log(e))
 
@@ -32,8 +33,8 @@ const seedDB = async () => {
             },
             images: [
                 {
-                    url: 'https://res.cloudinary.com/dhrujpm4m/image/upload/v1751890745/YelpCamp/yhgir0drk9bh72enppzs.png',
-                    filename: 'YelpCamp/yhgir0drk9bh72enppzs',
+                    url: 'https://res.cloudinary.com/dhrujpm4m/image/upload/v1752838111/YelpCamp/hkae5cxhyne5gyehzd1o.png',
+                    filename: 'YelpCamp/hkae5cxhyne5gyehzd1o',
                 },
                 {
                     url: 'https://res.cloudinary.com/dhrujpm4m/image/upload/v1751890746/YelpCamp/evkzursottcxjhukbgvx.jpg',
